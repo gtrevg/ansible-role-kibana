@@ -1,0 +1,71 @@
+
+- name: make sure local temp directories exist
+  sudo: false
+  local_action: file dest="{{ item }}" state=directory
+  with_items:
+    - "{{ kibana_local_tmp_dir }}/tmp"
+    - "{{ kibana_local_tmp_dir }}/pkgs"
+
+
+- name: "locally download kibana latest {{ kibana_download_version }}"
+  sudo: false
+  local_action: >
+    get_url url="{{ kibana_download_url }}"
+    dest="{{ kibana_local_tmp_dir }}/pkgs/{{ kibana_archive_name }}"
+
+- name: create target directories
+  sudo: true
+  file:
+    name: "{{ item }}"
+    state: directory
+    mode: "0755"
+  with_items:
+    - "{{ kibana_target_tmp_dir }}/pkgs"
+    - "{{ kibana_target_tmp_dir }}/tmp"
+    - "{{ kibana_remote_destination_dir | dirname }}"
+
+- name: get remote temp directory name
+  sudo: true
+  shell: mktemp -d -p "{{ kibana_target_tmp_dir }}/tmp"
+  register: mktemp
+
+- name: push kibana package to target host
+  sudo: true
+  copy:
+    src: "{{ kibana_local_tmp_dir }}/pkgs/{{ kibana_archive_name }}"
+    dest: "{{ kibana_target_tmp_dir }}/pkgs/{{ kibana_archive_name }}"
+
+- name: extract the contents of the archive
+  sudo: true
+  unarchive:
+    src: "{{ kibana_target_tmp_dir }}/pkgs/{{ kibana_archive_name }}"
+    dest: "{{ mktemp.stdout }}"
+
+
+- name: get extracted kibana directory name
+  sudo: true
+  command: ls "{{ mktemp.stdout }}"
+  register: k_dir
+
+
+- name: "Update the config.js file with the correct host/port values"
+  sudo: true
+  replace:
+    dest: "{{ mktemp.stdout }}/{{ k_dir.stdout }}/config.js"
+    regexp: '\"\+window.location.hostname\+\":9200'
+    replace: "{{ kibana_elasticsearch_server_name }}:{{ kibana_elasticsearch_server_port }}"
+
+
+- name:  move the software to the target installation location
+  sudo: true
+  command: >
+    creates="{{ kibana_remote_destination_dir }}/config.js"
+    mv "{{ mktemp.stdout }}/{{ k_dir.stdout }}" "{{ kibana_remote_destination_dir }}"
+
+- name: set the proper owner and group for the web directory
+  file:
+    name: "{{ kibana_remote_destination_dir }}"
+    owner: "{{ kibana_remote_destination_owner }}"
+    group: "{{ kibana_remote_destination_group }}"
+    recurse: yes
+    state: directory
