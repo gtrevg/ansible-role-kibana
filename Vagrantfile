@@ -2,14 +2,14 @@
 # vi: set ft=ruby :
 
 MACHINES = [
-	# {
-	# 	"id" => "test-ubuntu01",
-	# 	"vm"	=> {
-	# 		"box"	=> 			"precise64",
-	# 		"box_url" =>	"http://files.vagrantup.com/precise64.box",
-	# 		"network"	=>	"192.168.20.2"
-	# 	}
-	# },
+	{
+		"id" => "test-ubuntu01",
+		"vm"	=> {
+			"box"	=> 			"precise64",
+			"box_url" =>	"http://files.vagrantup.com/precise64.box",
+			"network"	=>	"192.168.20.2"
+		}
+	},
 	{
 		"id" => "test-centos01",
 		"vm"	=> {
@@ -39,17 +39,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 		ansible.groups = ANSIBLE["groups"]
 	end
 
-	# p = 0
 	MACHINES.each do |machine|
 
 		config.vm.define machine["id"] do |node|
+      node.vm.hostname = machine["id"]
 			node.vm.box = machine["vm"]["box"]
 			node.vm.box_url = machine["vm"]["box_url"]
-			node.vm.network :private_network, :ip => machine["vm"]["ip"]
-
-			# config.vm.network "forwarded_port", guest: 19001 + p, host: 9001
-			# p += 1
-
+      node.vm.network :private_network, type: "dhcp" #:ip => machine["vm"]["ip"]
 		end
 
 	end
