@@ -7,12 +7,31 @@
 
   vars:
     # custom_configuration: value
+    kibana_esearch_www_dir: /var/www/kibana/esearch
+    kibana_esearchdebug_www_dir: /var/www/kibana/esearchdebug
 
   pre_tasks:
     - debug: msg="Running test installation"
-    # - name: APT update
-    #   sudo: yes
-    #   apt: update_cache=yes
 
   roles:
-    - '.'    # The current directory itself is the role
+  - role: '.'
+    nginx_user: root
+    nginx_sites:
+      - server:
+        file_name:    kibana.comcast.com
+        server_name:  kibana.comcast.com
+        listen:       80
+
+        location_esearch:
+          name:       /logs
+          alias:      "{{ kibana_esearch_www_dir }}"
+          try_files:  "$uri $uri/ /index.html"
+          access_log: /var/log/nginx/logs.kibana.comcast.com_access.log
+          error_log:  /var/log/nginx/logs.kibana..comcast.com_error.log
+
+        location_esearchdebug:
+          name:       /logsdebug
+          alias:      "{{ kibana_esearchdebug_www_dir }}"
+          try_files:  "$uri $uri/ /index.html"
+          access_log: /var/log/nginx/logsdebug.kibana.comcast.com_access.log
+          error_log:  /var/log/nginx/logsdebug.kibana..comcast.com_error.log
