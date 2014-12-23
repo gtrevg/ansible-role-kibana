@@ -13,6 +13,12 @@
     get_url url="{{ kibana_download_url }}"
     dest="{{ kibana_local_tmp_dir }}/pkgs/{{ kibana_archive_name }}"
 
+# - name: "delete kibana at target directory - {{ kibana_remote_destination_dir | dirname }}"
+#   sudo: true
+#   file:
+#     name: "{{ kibana_remote_destination_dir | dirname }}"
+#     state: absent
+
 - name: create target directories
   sudo: true
   file:
@@ -48,12 +54,12 @@
   register: k_dir
 
 
-- name: "Update the config.js file with the correct host/port values"
+- name: "Update the config.js file with the correct host/port values - {{ kibana_elasticsearch_server_name }}{{ kibana_elasticsearch_server_port }}{{ kibana_elasticsearch_server_path }}"
   sudo: true
   replace:
     dest: "{{ mktemp.stdout }}/{{ k_dir.stdout }}/config.js"
     regexp: '\"\+window.location.hostname\+\":9200'
-    replace: "{{ kibana_elasticsearch_server_name }}:{{ kibana_elasticsearch_server_port }}"
+    replace: "{{ kibana_elasticsearch_server_name }}{{ kibana_elasticsearch_server_port }}{{ kibana_elasticsearch_server_path }}"
 
 
 - name:  move the software to the target installation location

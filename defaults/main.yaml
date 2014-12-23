@@ -15,4 +15,5 @@ kibana_remote_destination_group:  root
 
 # config.js file
 kibana_elasticsearch_server_name:  '\"+window.location.hostname+\"'
-kibana_elasticsearch_server_port: "9200"
+kibana_elasticsearch_server_port: ":9200"
+kibana_elasticsearch_server_path:  "/"
